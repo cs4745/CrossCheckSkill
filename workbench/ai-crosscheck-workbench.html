@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>多源AI交叉验证台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f6fa; --card:#fff; --text:#1a1d29; --muted:#6b7280; --line:#e5e7eb;
+  --primary:#4f46e5; --primary-soft:#eef2ff;
+  --danger:#dc2626; --danger-soft:#fef2f2;
+  --ok:#16a34a; --ok-soft:#f0fdf4;
+  --warn:#f59e0b; --warn-soft:#fffbeb;
+  --doubao:#f97316; --deepseek:#4d6bfe; --qwen:#7c3aed;
+  --r:14px;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:15px; line-height:1.6;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* header */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.logo{width:40px;height:40px;border-radius:11px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.logo svg{width:22px;height:22px}
+h1{font-size:20px;font-weight:700;letter-spacing:-.2px}
+.sub{font-size:12.5px;color:var(--muted)}
+.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+button{font-family:inherit;font-size:14px;cursor:pointer;border:none;background:none;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:11px;background:var(--card);border:1px solid var(--line);font-weight:500;transition:.15s}
+.btn:hover{border-color:#c7cad1}
+.btn.pri{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.pri:hover{background:#4338ca}
+.btn.dgr{color:var(--danger);border-color:#f3c6c6}
+.btn.dgr:hover{background:var(--danger-soft)}
+.btn.sm{min-height:36px;padding:0 11px;font-size:13px;border-radius:9px}
+/* backup tip */
+.tip{display:none;align-items:center;gap:9px;background:var(--warn-soft);border:1px solid #fde3a7;color:#92610a;padding:11px 14px;border-radius:12px;margin-bottom:14px;font-size:13.5px}
+.tip.show{display:flex}
+.tip button{margin-left:auto;color:#92610a;font-weight:600;text-decoration:underline;font-size:13px}
+/* card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.ch{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.ch h2{font-size:15.5px;font-weight:650}
+.badge{font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;background:var(--primary-soft);color:var(--primary)}
+.badge.red{background:var(--danger-soft);color:var(--danger)}
+.ch .right{margin-left:auto;display:flex;gap:7px}
+/* today */
+.today{border-left:4px solid var(--primary)}
+.trow{display:flex;align-items:flex-start;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:9px;background:#fcfcfd}
+.trow:last-child{margin-bottom:0}
+.trow.late{border-color:#f5c2c2;background:var(--danger-soft)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--primary);margin-top:8px;flex:none}
+.trow.late .dot{background:var(--danger)}
+.tmain{flex:1;min-width:0}
+.tq{font-weight:550;font-size:14.5px;word-break:break-word}
+.tmeta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.late-tag{color:var(--danger);font-weight:650}
+.tact{display:flex;gap:7px;flex:none;flex-wrap:wrap}
+.empty{text-align:center;padding:26px 12px;color:var(--muted);font-size:14px}
+.empty svg{width:34px;height:34px;stroke:#cbd0d8;margin-bottom:7px}
+/* new form */
+.form{display:flex;gap:9px;flex-wrap:wrap}
+.form textarea{flex:1;min-width:240px;font-family:inherit;font-size:16px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;resize:vertical;min-height:48px;line-height:1.5;background:#fcfcfd;color:var(--text)}
+.form input[type=date]{font-family:inherit;font-size:16px;padding:0 12px;height:48px;border:1px solid var(--line);border-radius:11px;background:#fcfcfd;color:var(--text)}
+.form textarea:focus,.form input:focus{outline:none;border-color:var(--primary);background:#fff}
+.form .btn{min-height:48px}
+/* queue */
+.filters{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.chip{min-height:36px;padding:0 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:13.5px;display:inline-flex;align-items:center}
+.chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.qrow{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid var(--line);border-radius:12px;margin-bottom:9px;cursor:pointer;transition:.15s;background:#fcfcfd}
+.qrow:hover{border-color:var(--primary);background:#fff}
+.qrow:last-child{margin-bottom:0}
+.st{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:7px;flex:none}
+.st.pending{background:#f1f3f7;color:#5b6474}
+.st.running{background:var(--warn-soft);color:#b45309}
+.st.done{background:var(--ok-soft);color:#15803d}
+.srcs{display:flex;gap:4px;flex:none}
+.pill{width:22px;height:22px;border-radius:6px;font-size:10.5px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;opacity:.22}
+.pill.on{opacity:1}
+.pill.d{background:var(--doubao)}.pill.s{background:var(--deepseek)}.pill.q{background:var(--qwen)}
+.dbadge{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:7px;flex:none;background:#e6f7f1;color:#0d9488}
+.conf{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:7px;flex:none}
+.conf.high{background:var(--ok-soft);color:#15803d}
+.conf.medium{background:var(--warn-soft);color:#b45309}
+.conf.low{background:var(--danger-soft);color:var(--danger)}
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sbox{text-align:center}
+.sbox h3{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:9px}
+.legend{display:flex;justify-content:center;gap:13px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:9px;height:9px;border-radius:3px;display:inline-block}
+/* drawer */
+.mask{position:fixed;inset:0;background:rgba(15,18,28,.42);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+.mask.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--bg);z-index:50;transform:translateX(101%);transition:transform .25s cubic-bezier(.3,.8,.4,1);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.drawer.on{transform:none}
+.dhead{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:13px 16px;display:flex;align-items:center;gap:11px;z-index:2}
+.dhead h2{font-size:16px;font-weight:650;flex:1;min-width:0}
+.dbody{padding:16px;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+.fld{margin-bottom:15px}
+.fld label{display:block;font-size:13px;font-weight:650;color:#3d4453;margin-bottom:6px}
+.fld textarea,.fld input[type=text]{width:100%;font-family:inherit;font-size:16px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;resize:vertical;line-height:1.6;background:var(--card);color:var(--text)}
+.fld textarea:focus,.fld input:focus{outline:none;border-color:var(--primary)}
+.srcbox{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px;background:var(--card)}
+.srchead{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);background:#fafbfd}
+.srcname{font-weight:650;font-size:14px}
+.tagc{width:24px;height:24px;border-radius:7px;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.srchead .cnt{margin-left:auto;font-size:12px;color:var(--muted)}
+.srcbox textarea{width:100%;border:none;padding:12px 13px;font-family:inherit;font-size:15px;line-height:1.65;resize:vertical;min-height:100px;background:var(--card);color:var(--text)}
+.srcbox textarea:focus{outline:none;background:#fcfcff}
+.adopt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.adopt input{width:17px;height:17px;accent-color:var(--primary);cursor:pointer}
+.confpick{display:flex;gap:8px;flex-wrap:wrap}
+.cbtn{min-height:44px;padding:0 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:550}
+.cbtn.on.high{background:var(--ok);color:#fff;border-color:var(--ok)}
+.cbtn.on.medium{background:var(--warn);color:#fff;border-color:var(--warn)}
+.cbtn.on.low{background:var(--danger);color:#fff;border-color:var(--danger)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.55}
+.hint b{color:var(--primary)}
+.dfoot{display:flex;gap:9px;flex-wrap:wrap;padding-top:6px}
+.grow{flex:1}
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:#1a1d29;color:#fff;padding:11px 20px;border-radius:11px;font-size:14px;opacity:0;pointer-events:none;transition:.22s;z-index:99;max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* confirm */
+.cfm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:60;background:rgba(15,18,28,.45)}
+.cfm.on{display:flex}
+.cfmbox{background:var(--card);border-radius:16px;padding:22px;max-width:400px;width:100%}
+.cfmbox h3{font-size:16.5px;margin-bottom:9px}
+.cfmbox p{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.65}
+.cfmbox .row{display:flex;gap:9px}
+.cfmbox .row .btn{flex:1}
+@media(max-width:768px){
+  .wrap{padding:14px 12px 50px}
+  h1{font-size:18px}
+  .top-actions{width:100%;margin-left:0}
+  .top-actions .btn{flex:1;min-width:0;padding:0 8px;font-size:13px}
+  .trow{flex-wrap:wrap}
+  .tact{width:100%;padding-left:20px}
+  .tact .btn{flex:1}
+  .stats{grid-template-columns:1fr;gap:22px}
+  .qrow{flex-wrap:wrap;gap:8px}
+  .qrow .qtext{width:100%;order:-1}
+  .drawer{width:100%}
+  .form textarea{min-width:100%}
+  .form input[type=date]{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 3h9"/><path d="M6 15h12"/>
+      </svg>
+    </div>
+    <div>
+      <h1>多源AI交叉验证台</h1>
+      <div class="sub">豆包 · DeepSeek · 千问 三源比对 → 带置信度的结论</div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" onclick="exportJSON()"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>导出备份</button>
+      <button class="btn" onclick="document.getElementById('imp').click()"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>导入恢复</button>
+      <button class="btn dgr" onclick="askClear()"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>清空</button>
+      <input type="file" id="imp" accept="application/json,.json" style="display:none" onchange="importJSON(this)">
+    </div>
+  </div>
+
+  <div class="tip" id="tip">
+    <svg class="i" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+    <span id="tipTxt"></span>
+    <button onclick="exportJSON()">立即导出</button>
+  </div>
+
+  <!-- 模块一：今天要处理 -->
+  <div class="card today">
+    <div class="ch">
+      <svg class="i" viewBox="0 0 24 24" style="stroke:var(--primary)"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <h2>今天要处理</h2>
+      <span class="badge" id="todayCount">0</span>
+      <span class="badge red" id="lateCount" style="display:none">0 逾期</span>
+    </div>
+    <div id="todayList"></div>
+  </div>
+
+  <!-- 模块二：问题队列 -->
+  <div class="card">
+    <div class="ch">
+      <svg class="i" viewBox="0 0 24 24" style="stroke:var(--primary)"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      <h2>待验证问题</h2>
+      <span class="badge" id="allCount">0</span>
+    </div>
+    <div class="form">
+      <textarea id="nq" rows="1" placeholder="要交叉验证的问题，例如：Redis 的 RDB 和 AOF 混合持久化在 7.x 里默认开启吗？"></textarea>
+      <input type="date" id="nd">
+      <button class="btn pri" onclick="addItem()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>加入队列</button>
+    </div>
+    <div class="filters" style="margin-top:14px">
+      <button class="chip on" data-f="all" onclick="setF('all')">全部</button>
+      <button class="chip" data-f="pending" onclick="setF('pending')">待跑</button>
+      <button class="chip" data-f="running" onclick="setF('running')">比对中</button>
+      <button class="chip" data-f="done" onclick="setF('done')">已归档</button>
+    </div>
+    <div id="queue"></div>
+  </div>
+
+  <!-- 模块三：结论统计 -->
+  <div class="card">
+    <div class="ch">
+      <svg class="i" viewBox="0 0 24 24" style="stroke:var(--primary)"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+      <h2>归档统计</h2>
+    </div>
+    <div class="stats">
+      <div class="sbox">
+        <h3>结论置信度分布</h3>
+        <div id="donut"></div>
+        <div class="legend">
+          <span><i class="lg" style="background:var(--ok)"></i>高</span>
+          <span><i class="lg" style="background:var(--warn)"></i>中</span>
+          <span><i class="lg" style="background:var(--danger)"></i>低</span>
+        </div>
+      </div>
+      <div class="sbox">
+        <h3>各源被采纳次数</h3>
+        <div id="bars"></div>
+        <div class="legend">
+          <span><i class="lg" style="background:var(--doubao)"></i>豆包</span>
+          <span><i class="lg" style="background:var(--deepseek)"></i>DeepSeek</span>
+          <span><i class="lg" style="background:var(--qwen)"></i>千问</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:6px">
+    <button class="btn sm" onclick="askDemo()">清空示例数据</button>
+  </div>
+</div>
+
+<!-- 详情抽屉 -->
+<div class="mask" id="mask" onclick="closeD()"></div>
+<div class="drawer" id="drawer">
+  <div class="dhead">
+    <button class="btn sm" onclick="closeD()"><svg class="i" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+    <h2>多源答案对照</h2>
+    <button class="btn sm" onclick="copyQ()"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制问题</button>
+  </div>
+  <div class="dbody" id="dbody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="cfm" id="cfm">
+  <div class="cfmbox">
+    <h3 id="cfmT"></h3>
+    <p id="cfmM"></p>
+    <div class="row">
+      <button class="btn" onclick="closeCfm()">取消</button>
+      <button class="btn dgr" id="cfmOk">确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var KEY='wb_aicross_v1';
+var SRC=[{k:'doubao',n:'豆包',c:'var(--doubao)',t:'豆',cls:'d'},
+         {k:'deepseek',n:'DeepSeek',c:'var(--deepseek)',t:'DS',cls:'s'},
+         {k:'qwen',n:'千问',c:'var(--qwen)',t:'千',cls:'q'}];
+var data=[],filter='all',curId=null;
+
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function shiftDay(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('on');},2000);}
+
+function seed(){return [
+ {id:uid(),q:'Redis 7.x 的 RDB+AOF 混合持久化默认是开启的吗？',due:shiftDay(-2),status:'running',domain:'通用',
+  answers:{doubao:'Redis 4.0 引入 aof-use-rdb-preamble，7.x 中该项默认为 yes，即 AOF 重写时使用 RDB 格式前导。但前提是 appendonly 本身要开启，而 appendonly 默认是 no。',
+           deepseek:'混合持久化 aof-use-rdb-preamble 默认 yes。不过 Redis 默认只开 RDB，AOF 需要手动 appendonly yes 才生效。',qwen:''},
+  consensus:'',divergence:'',conclusion:'',confidence:'',adopted:[],createdAt:shiftDay(-3)},
+ {id:uid(),q:'HTTP/3 的 QUIC 是基于 UDP 还是 TCP？各家说法是否一致？',due:today(),status:'done',domain:'通用',
+  answers:{doubao:'QUIC 基于 UDP，在用户态实现可靠传输、拥塞控制和多路复用，避免了 TCP 的队头阻塞。',
+           deepseek:'QUIC 构建在 UDP 之上，把 TLS1.3 握手与传输握手合并，实现 0-RTT/1-RTT 建连。',
+           qwen:'QUIC 运行在 UDP 上，是 HTTP/3 的传输层基础，解决了 TCP 队头阻塞问题。'},
+  consensus:'[3/3] QUIC 基于 UDP，不是 TCP\n[3/3] 解决了 TCP 层面的队头阻塞\n[2/3] 在用户态实现可靠传输与拥塞控制（豆包、DeepSeek）',
+  divergence:'无实质分歧。DeepSeek 额外提到 TLS1.3 握手合并与 0-RTT，属于补充信息而非冲突。',
+  conclusion:'QUIC 基于 UDP。三家结论完全一致且互相印证，可直接采信。',
+  confidence:'high',adopted:['doubao','deepseek','qwen'],createdAt:shiftDay(-1)},
+ {id:uid(),q:'普通成年人每年打流感疫苗，和新冠疫苗的禁忌人群（急性病发作期、既往严重过敏）重叠吗？',due:today(),status:'done',domain:'健康',
+  answers:{doubao:'两者都要求急性发热性疾病发作期暂缓接种；对疫苗成分曾有严重过敏史者一般禁忌。慢性病患者稳定期通常可接种，但需遵医嘱。',
+           deepseek:'禁忌重叠主要在：急性感染发热期、对疫苗任一成分严重过敏史。妊娠期、免疫功能低下者需医生评估，两类疫苗原则相近。',
+           qwen:'共同禁忌包括严重过敏史和急性疾病期；基础疾病稳定者多可接种。具体以说明书和接种点评估为准。'},
+  consensus:'[3/3] 急性发热/急性病发作期应暂缓接种\n[3/3] 对疫苗成分严重过敏者禁忌\n[3/3] 慢性基础病稳定期通常可接种（仍应以现场医生评估为准）',
+  divergence:'无实质冲突，三家表述高度一致。',
+  conclusion:'禁忌高度重叠：急性病发作期暂缓、严重过敏史禁忌。三源一致，可直接采信；但接种前仍应以现场医生评估为准。以上仅为 AI 参考，请以执业医师/官方指南为准。',
+  confidence:'medium',adopted:['doubao','deepseek','qwen'],createdAt:shiftDay(-1)},
+ {id:uid(),q:'PostgreSQL 的 MVCC 和 MySQL InnoDB 的 MVCC 实现差异在哪？',due:shiftDay(1),status:'pending',domain:'通用',
+  answers:{doubao:'',deepseek:'',qwen:''},consensus:'',divergence:'',conclusion:'',confidence:'',adopted:[],createdAt:today()},
+ {id:uid(),q:'2026 年个人所得税专项附加扣除，赡养老人的标准提高到多少了？',due:shiftDay(2),status:'done',domain:'通用',
+  answers:{doubao:'独生子女每月 3000 元，非独生子女与兄弟姐妹分摊 3000 元额度，每人不超过 1500 元。',
+           deepseek:'赡养老人专项附加扣除为每月 3000 元，独生子女全额，非独生子女分摊。',
+           qwen:'标准是每月 2000 元，独生子女按此扣除。'},
+  consensus:'[2/3] 独生子女标准为每月 3000 元（豆包、DeepSeek）\n[3/3] 非独生子女需要与兄弟姐妹分摊额度',
+  divergence:'金额存在直接冲突：豆包和 DeepSeek 都说 3000 元/月，千问说 2000 元/月。2000 元是 2022 年之前的旧标准，2023 年 8 月起已上调至 3000 元。千问疑似训练数据滞后。',
+  conclusion:'每月 3000 元。2:1 且多数方与政策调整时间线吻合，千问给的是过期标准。涉及税务金额建议以国家税务总局官网为准再确认一次。',
+  confidence:'medium',adopted:['doubao','deepseek'],createdAt:shiftDay(-1)}
+];}
+
+function load(){
+  try{var r=localStorage.getItem(KEY);
+    if(r){data=JSON.parse(r);if(!Array.isArray(data))data=[];}
+    else{data=seed();save();}
+  }catch(e){data=seed();}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){toast('保存失败，本地存储可能已满');}}
+
+function get(id){for(var i=0;i<data.length;i++)if(data[i].id===id)return data[i];return null;}
+function filled(it){var n=0;for(var i=0;i<SRC.length;i++){var v=it.answers&&it.answers[SRC[i].k];if(v&&v.trim())n++;}return n;}
+
+function render(){renderToday();renderQueue();renderStats();renderTip();}
+
+function renderTip(){
+  var t=document.getElementById('tip');
+  if(data.length>=30){document.getElementById('tipTxt').textContent='数据已积累 '+data.length+' 条，建议导出一份备份。';t.classList.add('show');}
+  else t.classList.remove('show');
+}
+
+function renderToday(){
+  var td=today(),late=[],now=[];
+  for(var i=0;i<data.length;i++){var it=data[i];
+    if(it.status==='done')continue;
+    if(it.due<td)late.push(it);else if(it.due===td)now.push(it);
+  }
+  var list=late.concat(now),box=document.getElementById('todayList');
+  document.getElementById('todayCount').textContent=list.length;
+  var lc=document.getElementById('lateCount');
+  if(late.length){lc.style.display='';lc.textContent=late.length+' 逾期';}else lc.style.display='none';
+
+  if(!list.length){
+    box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><div>今天没有待处理的验证任务</div></div>';
+    return;
+  }
+  var h='';
+  for(var j=0;j<list.length;j++){
+    var it=list[j],isLate=it.due<td,n=filled(it);
+    h+='<div class="trow'+(isLate?' late':'')+'">'
+      +'<div class="dot"></div><div class="tmain">'
+      +'<div class="tq">'+esc(it.q)+'</div>'
+      +'<div class="tmeta">'
+      +(isLate?'<span class="late-tag">逾期 '+dayGap(it.due)+' 天 · 已顺延到今天</span>':'<span>今天到期</span>')
+      +'<span>已收集 '+n+'/'+SRC.length+' 源</span></div></div>'
+      +'<div class="tact">'
+      +'<button class="btn sm pri" onclick="openD(\''+it.id+'\')">去填答案</button>'
+      +'<button class="btn sm" onclick="markDone(\''+it.id+'\')">标记归档</button>'
+      +'</div></div>';
+  }
+  box.innerHTML=h;
+}
+function dayGap(d){var a=new Date(today()),b=new Date(d);return Math.round((a-b)/86400000);}
+
+function setF(f){filter=f;var c=document.querySelectorAll('.chip');
+  for(var i=0;i<c.length;i++)c[i].classList.toggle('on',c[i].getAttribute('data-f')===f);
+  renderQueue();}
+
+function renderQueue(){
+  document.getElementById('allCount').textContent=data.length;
+  var arr=data.slice().sort(function(a,b){
+    var o={running:0,pending:1,done:2};
+    if(o[a.status]!==o[b.status])return o[a.status]-o[b.status];
+    return a.due<b.due?-1:1;});
+  if(filter!=='all')arr=arr.filter(function(x){return x.status===filter;});
+  var box=document.getElementById('queue');
+  if(!arr.length){box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg><div>这个分类下还没有问题</div></div>';return;}
+  var st={pending:'待跑',running:'比对中',done:'已归档'},cf={high:'高',medium:'中',low:'低'};
+  var h='';
+  for(var i=0;i<arr.length;i++){
+    var it=arr[i];
+    h+='<div class="qrow" onclick="openD(\''+it.id+'\')">'
+      +'<span class="st '+it.status+'">'+st[it.status]+'</span>'
+      +'<span class="qtext" style="flex:1;min-width:0;font-size:14.5px">'+esc(it.q)+'</span>'
+      +(it.domain==='健康'?'<span class="dbadge">健康</span>':'')
+      +'<span class="srcs">';
+    for(var k=0;k<SRC.length;k++){
+      var v=it.answers&&it.answers[SRC[k].k];
+      h+='<i class="pill '+SRC[k].cls+(v&&v.trim()?' on':'')+'">'+SRC[k].t+'</i>';
+    }
+    h+='</span>';
+    if(it.confidence)h+='<span class="conf '+it.confidence+'">'+cf[it.confidence]+'</span>';
+    h+='<span style="font-size:12.5px;color:var(--muted);flex:none">'+it.due.slice(5)+'</span></div>';
+  }
+  box.innerHTML=h;
+}
+
+function renderStats(){
+  var c={high:0,medium:0,low:0},tot=0;
+  var ad={doubao:0,deepseek:0,qwen:0};
+  for(var i=0;i<data.length;i++){var it=data[i];
+    if(it.confidence&&c[it.confidence]!==undefined){c[it.confidence]++;tot++;}
+    if(it.adopted)for(var j=0;j<it.adopted.length;j++)if(ad[it.adopted[j]]!==undefined)ad[it.adopted[j]]++;
+  }
+  document.getElementById('donut').innerHTML=donut(c,tot);
+  document.getElementById('bars').innerHTML=bars(ad);
+}
+
+function donut(c,tot){
+  var R=52,SW=17,CX=80,CY=72,C=2*Math.PI*R;
+  if(!tot)return '<svg viewBox="0 0 160 150" style="width:100%;max-width:200px"><circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="#eceef3" stroke-width="'+SW+'"/><text x="'+CX+'" y="'+(CY+5)+'" text-anchor="middle" font-size="13" fill="#9aa1ad">暂无归档</text></svg>';
+  var seg=[{v:c.high,col:'#16a34a'},{v:c.medium,col:'#f59e0b'},{v:c.low,col:'#dc2626'}];
+  var s='<svg viewBox="0 0 160 150" style="width:100%;max-width:200px"><circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="#eceef3" stroke-width="'+SW+'"/>';
+  var off=0;
+  for(var i=0;i<seg.length;i++){
+    if(!seg[i].v)continue;
+    var len=C*seg[i].v/tot;
+    s+='<circle cx="'+CX+'" cy="'+CY+'" r="'+R+'" fill="none" stroke="'+seg[i].col+'" stroke-width="'+SW+'" stroke-linecap="butt" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+CX+' '+CY+')"/>';
+    off+=len;
+  }
+  s+='<text x="'+CX+'" y="'+(CY+2)+'" text-anchor="middle" font-size="26" font-weight="700" fill="#1a1d29">'+tot+'</text>';
+  s+='<text x="'+CX+'" y="'+(CY+20)+'" text-anchor="middle" font-size="11.5" fill="#8b93a1">条已归档</text></svg>';
+  return s;
+}
+
+function bars(ad){
+  var keys=['doubao','deepseek','qwen'],cols=['#f97316','#4d6bfe','#7c3aed'],names=['豆包','DeepSeek','千问'];
+  var max=Math.max(ad.doubao,ad.deepseek,ad.qwen,1);
+  var W=300,H=150,BW=40,GAP=28,base=112,x0=34;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:300px">';
+  s+='<line x1="16" y1="'+base+'" x2="'+(W-10)+'" y2="'+base+'" stroke="#e5e7eb" stroke-width="1.5"/>';
+  for(var i=0;i<3;i++){
+    var v=ad[keys[i]],h=v?Math.max(6,(v/max)*82):3;
+    var x=x0+i*(BW+GAP),y=base-h;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+BW+'" height="'+h+'" rx="6" fill="'+(v?cols[i]:'#e8eaef')+'"/>';
+    s+='<text x="'+(x+BW/2)+'" y="'+(y-7)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1d29">'+v+'</text>';
+    s+='<text x="'+(x+BW/2)+'" y="'+(base+18)+'" text-anchor="middle" font-size="11" fill="#8b93a1">'+names[i]+'</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+function addItem(){
+  var q=document.getElementById('nq').value.trim();
+  if(!q){toast('先写下要验证的问题');return;}
+  var d=document.getElementById('nd').value||today();
+  data.unshift({id:uid(),q:q,due:d,status:'pending',domain:'通用',
+    answers:{doubao:'',deepseek:'',qwen:''},
+    consensus:'',divergence:'',conclusion:'',confidence:'',adopted:[],createdAt:today()});
+  save();document.getElementById('nq').value='';document.getElementById('nd').value=today();
+  render();toast('已加入队列');
+}
+
+function markDone(id){var it=get(id);if(!it)return;it.status='done';save();render();toast('已归档');}
+
+function openD(id){
+  curId=id;var it=get(id);if(!it)return;
+  var cf=[{k:'high',n:'高 · 可直接采信'},{k:'medium',n:'中 · 需留意'},{k:'low',n:'低 · 建议再核'}];
+  var n=filled(it);
+  var sug=n===0?'还没有收集答案。把上面的问题复制给 AI 助手，让它用浏览器跑一轮多源验证。'
+        :(n===SRC.length?'三源齐全。若核心结论多数一致可评<b>高</b>；若接近对半分评<b>中</b>；各源互斥评<b>低</b>。'
+        :'仅收集到 '+n+' 源，交叉验证强度不足，置信度建议<b>不高于中</b>。');
+  var h='<div class="fld"><label>验证问题</label><textarea id="fq" rows="2">'+esc(it.q)+'</textarea></div>';
+  h+='<div class="fld"><label>问题领域（如健康/金融属高风险，结论需谨慎）</label><select id="fdom" style="width:100%;font-family:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--card);color:var(--text)"><option value="通用">通用</option><option value="健康">健康问答</option></select></div>';
+
+  for(var i=0;i<SRC.length;i++){
+    var s=SRC[i],v=(it.answers&&it.answers[s.k])||'';
+    var ck=it.adopted&&it.adopted.indexOf(s.k)>=0;
+    h+='<div class="srcbox"><div class="srchead">'
+      +'<span class="tagc" style="background:'+s.c+'">'+s.t+'</span>'
+      +'<span class="srcname">'+s.n+'</span>'
+      +'<label class="adopt"><input type="checkbox" id="ad_'+s.k+'"'+(ck?' checked':'')+'>采纳</label>'
+      +'<span class="cnt">'+(v?v.length+' 字':'未收集')+'</span></div>'
+      +'<textarea id="a_'+s.k+'" placeholder="粘贴 '+s.n+' 的回答原文…">'+esc(v)+'</textarea></div>';
+  }
+
+  h+='<div class="fld"><label>共识点（≥2 家一致的断言）</label><textarea id="fc" rows="3" placeholder="[3/3] xxx&#10;[2/3] xxx（豆包、千问一致）">'+esc(it.consensus)+'</textarea></div>'
+   +'<div class="fld"><label>分歧点（逐条列出，不要藏）</label><textarea id="fd" rows="3" placeholder="关于 xxx：豆包说 A，DeepSeek 说 B，千问未提及。倾向 A，因为…">'+esc(it.divergence)+'</textarea></div>'
+   +'<div class="fld"><label>最终结论</label><textarea id="fn" rows="3" placeholder="明确写出推荐答案和判断理由">'+esc(it.conclusion)+'</textarea></div>'
+   +'<div class="fld"><label>置信度</label><div class="confpick">';
+  for(var j=0;j<cf.length;j++)
+    h+='<button class="cbtn '+cf[j].k+(it.confidence===cf[j].k?' on':'')+'" onclick="pickConf(\''+cf[j].k+'\')">'+cf[j].n+'</button>';
+  h+='</div><div class="hint">'+sug+'</div></div>'
+   +'<div class="dfoot">'
+   +'<button class="btn pri grow" onclick="saveD(true)">保存并归档</button>'
+   +'<button class="btn grow" onclick="saveD(false)">仅保存</button>'
+   +'<button class="btn dgr" onclick="askDel()">删除</button></div>';
+
+  document.getElementById('dbody').innerHTML=h;
+  document.getElementById('fdom').value=it.domain||'通用';
+  document.getElementById('drawer').classList.add('on');
+  document.getElementById('mask').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function pickConf(k){
+  var it=get(curId);if(!it)return;
+  it.confidence=(it.confidence===k?'':k);
+  var b=document.querySelectorAll('.cbtn');
+  for(var i=0;i<b.length;i++)b[i].classList.remove('on');
+  if(it.confidence){for(var j=0;j<b.length;j++)if(b[j].classList.contains(it.confidence))b[j].classList.add('on');}
+}
+function collect(){
+  var it=get(curId);if(!it)return null;
+  it.q=document.getElementById('fq').value.trim()||it.q;
+  it.domain=document.getElementById('fdom').value;
+  it.answers=it.answers||{};
+  it.adopted=[];
+  for(var i=0;i<SRC.length;i++){
+    var k=SRC[i].k;
+    it.answers[k]=document.getElementById('a_'+k).value;
+    if(document.getElementById('ad_'+k).checked)it.adopted.push(k);
+  }
+  it.consensus=document.getElementById('fc').value;
+  it.divergence=document.getElementById('fd').value;
+  it.conclusion=document.getElementById('fn').value;
+  return it;
+}
+function saveD(done){
+  var it=collect();if(!it)return;
+  if(done)it.status='done';
+  else if(it.status==='pending'&&filled(it)>0)it.status='running';
+  save();closeD();render();toast(done?'已归档':'已保存');
+}
+function closeD(){
+  document.getElementById('drawer').classList.remove('on');
+  document.getElementById('mask').classList.remove('on');
+  document.body.style.overflow='';curId=null;
+}
+function copyQ(){
+  var it=get(curId);if(!it)return;
+  var srcs='豆包 / DeepSeek / 千问 三源';
+  var t='用浏览器交叉验证这个问题（'+srcs+'）：\n'+it.q;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){toast('已复制，粘给 AI 助手即可');},function(){fallback(t);});
+  }else fallback(t);
+}
+function fallback(t){
+  var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';
+  document.body.appendChild(a);a.select();
+  try{document.execCommand('copy');toast('已复制');}catch(e){toast('复制失败，请手动选择');}
+  document.body.removeChild(a);
+}
+
+/* confirm */
+var cfmCb=null;
+function confirmBox(t,m,cb){
+  document.getElementById('cfmT').textContent=t;
+  document.getElementById('cfmM').textContent=m;
+  cfmCb=cb;document.getElementById('cfm').classList.add('on');
+}
+function closeCfm(){document.getElementById('cfm').classList.remove('on');cfmCb=null;}
+document.getElementById('cfmOk').onclick=function(){if(cfmCb)cfmCb();closeCfm();};
+function askClear(){confirmBox('确认清空全部数据？','这会删除全部 '+data.length+' 条记录，且无法撤销。建议先点「导出备份」。',function(){data=[];save();render();toast('已清空');});}
+function askDel(){var id=curId;confirmBox('删除这条记录？','该问题及三源答案将被移除，无法撤销。',function(){data=data.filter(function(x){return x.id!==id;});save();closeD();render();toast('已删除');});}
+function askDemo(){confirmBox('清空示例数据？','将移除 5 条内置示例，你自己录入的记录不受影响。',function(){
+  var s=seed(),qs={};for(var i=0;i<s.length;i++)qs[s[i].q]=1;
+  var before=data.length;
+  data=data.filter(function(x){return !qs[x.q];});
+  save();render();toast('已移除 '+(before-data.length)+' 条示例');});}
+
+/* backup */
+function exportJSON(){
+  var payload={app:'ai-crosscheck-workbench',version:1,exportedAt:new Date().toISOString(),count:data.length,items:data};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='交叉验证台备份_'+today()+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1500);
+  toast('已导出 '+data.length+' 条');
+}
+function importJSON(inp){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var o=JSON.parse(r.result);
+      var arr=Array.isArray(o)?o:(o&&Array.isArray(o.items)?o.items:null);
+      if(!arr)throw new Error('格式不对');
+      var have={};for(var i=0;i<data.length;i++)have[data[i].id]=1;
+      var add=0;
+      for(var j=0;j<arr.length;j++){
+        var it=arr[j];if(!it||!it.q)continue;
+        if(!it.id||have[it.id])it.id=uid();
+        it.status=it.status||'pending';it.due=it.due||today();
+        it.answers=it.answers||{doubao:'',deepseek:'',qwen:''};
+        it.adopted=it.adopted||[];it.createdAt=it.createdAt||today();
+        data.push(it);have[it.id]=1;add++;
+      }
+      save();render();toast('已导入 '+add+' 条，当前共 '+data.length+' 条');
+    }catch(e){toast('导入失败：文件格式不正确');}
+    inp.value='';
+  };
+  r.readAsText(f);
+}
+
+/* init */
+document.getElementById('nd').value=today();
+var nq=document.getElementById('nq');
+nq.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,140)+'px';});
+nq.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter')addItem();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(document.getElementById('cfm').classList.contains('on'))closeCfm();else if(curId)closeD();}});
+load();render();
+</script>
+</body>
+</html>

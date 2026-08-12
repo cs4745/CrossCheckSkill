@@ -4,6 +4,16 @@
 
 > 本技能只走浏览器 UI，绝不直连任何 AI 厂商 API（避免封号）。所有交互都是「在页面上填输入框 → 点发送按钮 → 读页面 DOM」。
 
+## ⚠️ 前置依赖（必看，使用前必须完成）
+
+**本技能依赖 Chrome MCP 驱动已登录的 Chrome，使用前必须提前配置好 Chrome MCP，否则整个交叉验证流程无法运行。**
+
+- Chrome MCP 是一套「浏览器自动化」能力，提供 `navigate / fill_or_select / click_element / javascript / screenshot` 等工具，由 Chrome 扩展 + 本地桥接进程驱动你日常使用的真实 Chrome（保留原生登录态，非无头模式）。
+- 技能内部通过 `chrome_*` 系列工具操作页面，没有任何兜底接口：没有 Chrome MCP 就发不出问题、抓不到答案。
+- 配置方式请参考官方中文文档（含扩展安装、桥接进程启动、WorkBuddy/MCP 客户端接入）：**https://github.com/hangwin/mcp-chrome/blob/master/README_zh.md**
+
+> 配置完成后建议先手动打开豆包 / DeepSeek / 千问 三个标签页并确保已登录，再触发技能，可避免「首次跳转登录页」打断流程。
+
 ## 三源固定集合
 
 | 源 | 地址 | 说明 |

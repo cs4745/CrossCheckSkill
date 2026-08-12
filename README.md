@@ -75,3 +75,27 @@
     ├─ workbench/
     │  └─ ai-crosscheck-workbench.html  # 配套记录台
     └─ README.md
+
+## 让 Agent 自动安装（零指挥）
+
+本仓库附带一份 **`AGENT_INSTALL.md`**——它是「写给 Agent 看的安装说明书」。你不需要自己一步步操作：
+
+> **直接把 `AGENT_INSTALL.md` 的内容（或本仓库链接）发给任意支持 skills 的 Agent，它会自主完成：**
+> 1. 检测当前框架与技能目录（WorkBuddy / 项目级 / 跨平台路径自适应）
+> 2. 核验 Chrome MCP 是否已配置（未配置会停下进行提示，附配置链接）
+> 3. 用 git 克隆或 WebFetch 降级拉取源码
+> 4. 把 `SKILL.md` + `references/` + `workbench/` 部署到正确目录
+> 5. 校验文件完整性（含「不含阿福」残留检查）并回报告
+
+即：**发送 → Agent 自适应安装 → 你只需要补「Chrome MCP 扩展授权 / 重启生效」这类必须人工的步骤。** 详见 `AGENT_INSTALL.md`。
+
+## 文件结构
+
+    CrossCheckSkill/
+    ├─ SKILL.md                      # 技能定义（核心）
+    ├─ references/
+    │  └─ site-profiles.md          # 三站实测选择器与坑位
+    ├─ workbench/
+    │  └─ ai-crosscheck-workbench.html  # 配套记录台
+    ├─ AGENT_INSTALL.md             # 面向 Agent 的自动安装指引（发给 Agent 即可装）
+    └─ README.md

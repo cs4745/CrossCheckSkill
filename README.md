@@ -66,16 +66,6 @@
 
 作为 WorkBuddy 技能使用：将本仓库放入技能目录（如 `~/.workbuddy/skills/multi-ai-crosscheck/`），保留 `SKILL.md` 与 `references/` 结构即可。
 
-## 文件结构
-
-    CrossCheckSkill/
-    ├─ SKILL.md                      # 技能定义（核心）
-    ├─ references/
-    │  └─ site-profiles.md          # 三站实测选择器与坑位
-    ├─ workbench/
-    │  └─ ai-crosscheck-workbench.html  # 配套记录台
-    └─ README.md
-
 ## 让 Agent 自动安装（零指挥）
 
 本仓库附带一份 **`AGENT_INSTALL.md`**——它是「写给 Agent 看的安装说明书」。你不需要自己一步步操作：
